@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Maker - Find Your Perfect Match</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+        
+        .card h2 {
+            color: #5a67d8;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #5a67d8;
+        }
+        
+        .interests-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .interest-tag {
+            background: #5a67d8;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .interest-tag button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .interest-tag button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .matches-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .match-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .match-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.8), rgba(245, 87, 108, 0.8));
+            z-index: 1;
+        }
+        
+        .match-card-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .match-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .match-age {
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+        
+        .shared-interests {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .shared-interest {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .shortlist-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .shortlist-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .shortlist-btn.shortlisted {
+            background: rgba(46, 204, 113, 0.8);
+            border-color: rgba(46, 204, 113, 1);
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .no-matches {
+            text-align: center;
+            padding: 3rem;
+            color: #718096;
+        }
+        
+        .no-matches h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Mock backend data storage
+        let users = [
+            { name: "Sanya", age: 24, interests: ["tech", "music", "reading"] },
+            { name: "Nikhil", age: 25, interests: ["sports", "gaming", "tech"] },
+            { name: "Priya", age: 22, interests: ["music", "art", "travel"] },
+            { name: "Rahul", age: 26, interests: ["tech", "sports", "movies"] }
+        ];
+
+        // Mock API functions
+        const api = {
+            createUser: (userData) => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const existingUser = users.find(u => u.name.toLowerCase() === userData.name.toLowerCase());
+                        if (existingUser) {
+                            // Update existing user
+                            existingUser.age = userData.age;
+                            existingUser.interests = userData.interests;
+                        } else {
+                            users.push(userData);
+                        }
+                        resolve({ success: true, user: userData });
+                    }, 500);
+                });
+            },
+
+            getMatches: (username) => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const user = users.find(u => u.name.toLowerCase() === username.toLowerCase());
+                        if (!user) {
+                            resolve({ matches: [] });
+                            return;
+                        }
+
+                        const matches = users.filter(u => {
+                            if (u.name.toLowerCase() === username.toLowerCase()) return false;
+                            
+                            const sharedInterests = u.interests.filter(interest => 
+                                user.interests.some(userInterest => 
+                                    userInterest.toLowerCase() === interest.toLowerCase()
+                                )
+                            );
+                            
+                            return sharedInterests.length >= 2;
+                        }).map(match => ({
+                            ...match,
+                            sharedInterests: match.interests.filter(interest => 
+                                user.interests.some(userInterest => 
+                                    userInterest.toLowerCase() === interest.toLowerCase()
+                                )
+                            )
+                        }));
+
+                        resolve({ matches });
+                    }, 300);
+                });
+            }
+        };
+
+        function App() {
+            const [formData, setFormData] = useState({
+                name: '',
+                age: '',
+                interests: []
+            });
+            const [currentInterest, setCurrentInterest] = useState('');
+            const [matches, setMatches] = useState([]);
+            const [shortlistedUsers, setShortlistedUsers] = useState([]);
+            const [loading, setLoading] = useState(false);
+            const [alert, setAlert] = useState(null);
+            const [searchUser, setSearchUser] = useState('');
+
+            const showAlert = (message, type = 'success') => {
+                setAlert({ message, type });
+                setTimeout(() => setAlert(null), 3000);
+            };
+
+            const handleInputChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: value
+                }));
+            };
+
+            const addInterest = () => {
+                if (currentInterest.trim() && !formData.interests.some(i => i.toLowerCase() === currentInterest.toLowerCase())) {
+                    setFormData(prev => ({
+                        ...prev,
+                        interests: [...prev.interests, currentInterest.trim()]
+                    }));
+                    setCurrentInterest('');
+                }
+            };
+
+            const removeInterest = (index) => {
+                setFormData(prev => ({
+                    ...prev,
+                    interests: prev.interests.filter((_, i) => i !== index)
+                }));
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                
+                if (!formData.name.trim()) {
+                    showAlert('Please enter your name', 'error');
+                    return;
+                }
+                
+                if (!formData.age || formData.age < 18 || formData.age > 100) {
+                    showAlert('Please enter a valid age (18-100)', 'error');
+                    return;
+                }
+                
+                if (formData.interests.length < 2) {
+                    showAlert('Please add at least 2 interests', 'error');
+                    return;
+                }
+
+                setLoading(true);
+                try {
+                    const result = await api.createUser({
+                        name: formData.name.trim(),
+                        age: parseInt(formData.age),
+                        interests: formData.interests
+                    });
+                    
+                    if (result.success) {
+                        showAlert(`Profile created successfully for ${result.user.name}!`);
+                        setSearchUser(result.user.name);
+                        findMatches(result.user.name);
+                    }
+                } catch (error) {
+                    showAlert('Error creating profile. Please try again.', 'error');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const findMatches = async (username) => {
+                setLoading(true);
+                try {
+                    const result = await api.getMatches(username || searchUser);
+                    setMatches(result.matches);
+                    
+                    if (result.matches.length === 0) {
+                        showAlert('No matches found. Try adding more interests!', 'error');
+                    } else {
+                        showAlert(`Found ${result.matches.length} potential matches!`);
+                    }
+                } catch (error) {
+                    showAlert('Error finding matches. Please try again.', 'error');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const toggleShortlist = (userName) => {
+                setShortlistedUsers(prev => {
+                    const isShortlisted = prev.includes(userName);
+                    if (isShortlisted) {
+                        showAlert(`Removed ${userName} from shortlist`);
+                        return prev.filter(name => name !== userName);
+                    } else {
+                        showAlert(`Added ${userName} to shortlist`);
+                        return [...prev, userName];
+                    }
+                });
+            };
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>💕 Match Maker</h1>
+                        <p>Find your perfect match based on shared interests</p>
+                    </div>
+
+                    <div className="stats">
+                        <div className="stat-card">
+                            <div className="stat-number">{users.length}</div>
+                            <div className="stat-label">Total Users</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number">{matches.length}</div>
+                            <div className="stat-label">Current Matches</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number">{shortlistedUsers.length}</div>
+                            <div className="stat-label">Shortlisted</div>
+                        </div>
+                    </div>
+
+                    {alert && (
+                        <div className={`alert ${alert.type === 'error' ? 'alert-error' : 'alert-success'}`}>
+                            {alert.message}
+                        </div>
+                    )}
+
+                    <div className="app-grid">
+                        <div className="card">
+                            <h2>Create Your Profile</h2>
+                            <form onSubmit={handleSubmit}>
+                                <div className="form-group">
+                                    <label htmlFor="name">Name *</label>
+                                    <input
+                                        type="text"
+                                        id="name"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleInputChange}
+                                        placeholder="Enter your name"
+                                        required
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="age">Age *</label>
+                                    <input
+                                        type="number"
+                                        id="age"
+                                        name="age"
+                                        value={formData.age}
+                                        onChange={handleInputChange}
+                                        placeholder="Enter your age"
+                                        min="18"
+                                        max="100"
+                                        required
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="interests">Interests * (minimum 2)</label>
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                        <input
+                                            type="text"
+                                            value={currentInterest}
+                                            onChange={(e) => setCurrentInterest(e.target.value)}
+                                            placeholder="Add an interest"
+                                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addInterest())}
+                                        />
+                                        <button type="button" onClick={addInterest} className="btn">Add</button>
+                                    </div>
+                                    
+                                    <div className="interests-input">
+                                        {formData.interests.map((interest, index) => (
+                                            <div key={index} className="interest-tag">
+                                                {interest}
+                                                <button type="button" onClick={() => removeInterest(index)}>×</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" className="btn" disabled={loading}>
+                                    {loading ? 'Creating Profile...' : 'Create Profile & Find Matches'}
+                                </button>
+                            </form>
+                        </div>
+
+                        <div className="card">
+                            <h2>Find Matches</h2>
+                            <div className="form-group">
+                                <label htmlFor="searchUser">Search by Username</label>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <input
+                                        type="text"
+                                        id="searchUser"
+                                        value={searchUser}
+                                        onChange={(e) => setSearchUser(e.target.value)}
+                                        placeholder="Enter username to find matches"
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={() => findMatches()} 
+                                        className="btn"
+                                        disabled={loading || !searchUser.trim()}
+                                    >
+                                        {loading ? 'Searching...' : 'Find Matches'}
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
+                                <h4>Sample Users to Try:</h4>
+                                <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+                                    Sanya, Nikhil, Priya, Rahul
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="matches-section">
+                        <h2>
+                            {matches.length > 0 ? `Potential Matches (${matches.length})` : 'Your Matches Will Appear Here'}
+                        </h2>
+                        
+                        {matches.length === 0 ? (
+                            <div className="no-matches">
+                                <h3>🔍 No matches found</h3>
+                                <p>Create a profile or search for an existing user to find potential matches!</p>
+                            </div>
+                        ) : (
+                            <div className="matches-grid">
+                                {matches.map((match, index) => (
+                                    <div key={index} className="match-card">
+                                        <div className="match-card-content">
+                                            <div className="match-name">{match.name}</div>
+                                            <div className="match-age">Age: {match.age}</div>
+                                            
+                                            <div className="shared-interests">
+                                                {match.sharedInterests.map((interest, i) => (
+                                                    <span key={i} className="shared-interest">{interest}</span>
+                                                ))}
+                                            </div>
+                                            
+                                            <button 
+                                                className={`shortlist-btn ${shortlistedUsers.includes(match.name) ? 'shortlisted' : ''}`}
+                                                onClick={() => toggleShortlist(match.name)}
+                                            >
+                                                {shortlistedUsers.includes(match.name) ? '✓ Shortlisted' : '+ Shortlist'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
